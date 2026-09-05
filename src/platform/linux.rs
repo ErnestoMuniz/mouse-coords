@@ -5,11 +5,11 @@ use x11rb::protocol::xproto::ConnectionExt;
 #[cfg(target_os = "linux")]
 use super::kwin;
 
-/// X11 puro via `XQueryPointer` na root window.
+/// Plain X11 via `XQueryPointer` on the root window.
 ///
-/// ATENÇÃO: no Wayland + XWayland esse valor fica congelado (só atualiza
-/// quando o cursor está sobre uma janela X11). Por isso, em sessão Wayland
-/// + KDE, `get_position()` prefere o backend KWin nativo abaixo.
+/// NOTE: on Wayland + XWayland this value is frozen (it only updates
+/// while the cursor is over an X11 window). That is why, on a Wayland
+/// + KDE session, `get_position()` prefers the native KWin backend below.
 pub fn get_position_x11() -> Result<Point, Error> {
     let (conn, screen_num) =
         x11rb::connect(None).map_err(|e| Error::Connection(format!("x11rb::connect: {e}")))?;
@@ -42,14 +42,14 @@ fn is_kde() -> bool {
         .unwrap_or(false)
 }
 
-/// Linux: Wayland+KDE → KWin scripting (`workspace.cursorPos`, exato);
-/// demais casos → X11 (`XQueryPointer`).
+/// Linux: Wayland+KDE -> KWin scripting (`workspace.cursorPos`, accurate);
+/// everything else -> X11 (`XQueryPointer`).
 pub fn get_position() -> Result<Point, Error> {
     if is_wayland() && is_kde() {
         match kwin::get_position_blocking() {
             Ok(p) => return Ok(p),
             Err(e) => {
-                eprintln!("mouse-coords: kwin falhou ({e}), tentando X11 como fallback");
+                eprintln!("mouse-coords: kwin failed ({e}), trying X11 as fallback");
             }
         }
     }

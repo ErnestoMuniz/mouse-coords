@@ -1,31 +1,31 @@
 # mouse-coords
 
-Pega a coordenada exata do mouse em Rust.
+Get the exact mouse coordinates in Rust.
 
 ```rust
 let pos = mouse_coords::get_position().unwrap();
 println!("x={} y={}", pos.x, pos.y);
 ```
 
-Ou rode o exemplo:
+Or run the example:
 
 ```bash
 cargo run --example pos
-cargo run --example pos -- --loop  # poll a cada 200ms, mova o mouse para ver mudar
+cargo run --example pos -- --loop  # poll every 200ms, move the mouse to see it change
 ```
 
-## Como funciona (Linux)
+## How it works (Linux)
 
-- **KDE Plasma Wayland** (ex: Fedora KDE): KWin scripting via D-Bus
-  (`workspace.cursorPos` + `callDBus` de volta, mesma técnica do
-  `kdotool`/`wdotool`). É o backend padrão quando
-  `XDG_SESSION_TYPE=wayland` + desktop KDE. Exato, segue o mouse.
-- **X11 puro**: `XQueryPointer` na root window via `x11rb`.
-- **Wayland + XWayland sem KWin**: `XQueryPointer` retorna posição
-  **congelada** (só atualiza sobre janelas X11) — por isso o KWin é
-  preferido no KDE. Não use o X11 como referência no Wayland.
+- **KDE Plasma Wayland** (e.g. Fedora KDE): KWin scripting over D-Bus
+  (`workspace.cursorPos` + `callDBus` callback, same technique as
+  `kdotool`/`wdotool`). It is the default backend when
+  `XDG_SESSION_TYPE=wayland` + KDE desktop. Accurate, follows the mouse.
+- **Plain X11**: `XQueryPointer` on the root window via `x11rb`.
+- **Wayland + XWayland without KWin**: `XQueryPointer` returns a
+  **frozen** position (it only updates over X11 windows) — that is why KWin
+  is preferred on KDE. Do not use X11 as a reference on Wayland.
 
-## Outras plataformas
+## Other platforms
 
 - **Windows**: `GetCursorPos`.
 - **macOS**: `CGEventCreate` + `CGEventGetLocation`.

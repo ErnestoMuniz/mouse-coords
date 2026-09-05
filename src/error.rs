@@ -2,20 +2,20 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum Error {
-    /// Falha ao conectar no display (ex: DISPLAY ausente, XWayland fora do ar).
+    /// Failed to connect to the display (e.g. missing DISPLAY, XWayland down).
     Connection(String),
-    /// Query ao servidor falhou.
+    /// Server query failed.
     Query(String),
-    /// Plataforma sem implementação.
+    /// Platform without implementation.
     Unsupported(String),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Connection(msg) => write!(f, "conexão com display falhou: {msg}"),
-            Self::Query(msg) => write!(f, "query da posição falhou: {msg}"),
-            Self::Unsupported(msg) => write!(f, "não suportado: {msg}"),
+            Self::Connection(msg) => write!(f, "display connection failed: {msg}"),
+            Self::Query(msg) => write!(f, "position query failed: {msg}"),
+            Self::Unsupported(msg) => write!(f, "unsupported: {msg}"),
         }
     }
 }

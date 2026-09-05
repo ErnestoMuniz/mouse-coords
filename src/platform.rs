@@ -26,5 +26,5 @@ pub fn get_position() -> Result<Point, Error> {
 
 #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 pub fn get_position() -> Result<Point, Error> {
-    Err(Error::Unsupported("SO não suportado".into()))
+    Err(Error::Unsupported("unsupported OS".into()))
 }

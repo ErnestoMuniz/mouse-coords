@@ -1,4 +1,4 @@
-//! mouse-coords: pega a coordenada exata do mouse.
+//! mouse-coords: get the exact mouse coordinates.
 //!
 //! ```rust
 //! let pos = mouse_coords::get_position().unwrap();
@@ -16,13 +16,13 @@ pub struct Point {
     pub y: i32,
 }
 
-/// Retorna a posição global do cursor em pixels, origem (0,0) no canto
-/// superior-esquerdo (multi-monitor: soma os offsets, ex: 3840x1080 = dois 1920 lado a lado).
+/// Returns the global cursor position in pixels, origin (0,0) at the
+/// top-left corner (multi-monitor: offsets are summed, e.g. 3840x1080 = two 1920 side by side).
 pub fn get_position() -> Result<Point, Error> {
     platform::get_position()
 }
 
-/// Alias orientado a objeto (compatível com a API da crate `mouse_position`).
+/// Object-oriented alias (compatible with the `mouse_position` crate API).
 pub struct Mouse;
 
 impl Mouse {

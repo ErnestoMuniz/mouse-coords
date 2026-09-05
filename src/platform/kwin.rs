@@ -1,12 +1,12 @@
-//! Posição do cursor no KDE Plasma (Wayland) via KWin scripting + D-Bus.
+//! Cursor position on KDE Plasma (Wayland) via KWin scripting + D-Bus.
 //!
-//! Mesma técnica do `kdotool` / `wdotool`: gera um JS temporário que lê
-//! `workspace.cursorPos` e devolve via `callDBus` para um serviço transitório
-//! que registramos no bus da sessão.
+//! Same technique as `kdotool` / `wdotool`: generate a temporary JS snippet
+//! that reads `workspace.cursorPos` and reports back via `callDBus` to a
+//! transient service registered on the session bus.
 //!
-//! - Usa o unique name do bus (`:1.xxx`) porque scripts carregados via
-//!   `loadScript` no Plasma 6 não alcançam well-known names.
-//! - Números JS chegam como int32, por isso a assinatura usa `i32`.
+//! - Uses the bus unique name (`:1.xxx`) because scripts loaded via
+//!   `loadScript` on Plasma 6 cannot reach well-known names.
+//! - JS numbers arrive as int32, hence the `i32` signature.
 
 use crate::{Error, Point};
 use std::collections::HashMap;
@@ -104,14 +104,14 @@ pub async fn get_position_async() -> Result<Point, Error> {
 
     let bridge_addr = conn
         .unique_name()
-        .ok_or_else(|| Error::Query("dbus sem unique name".into()))?
+        .ok_or_else(|| Error::Query("dbus has no unique name".into()))?
         .to_string();
 
     let req_id: i32 = NEXT_ID.fetch_add(1, Ordering::Relaxed);
     let (tx, rx) = oneshot::channel::<Option<(i32, i32)>>();
     pending.lock().await.pointer_waiters.insert(req_id, tx);
 
-    // Evita colisão de plugin_name entre chamadas e entre processos.
+    // Avoid plugin_name collisions across calls and processes.
     let plugin_name = format!(
         "mousecoords-{}-{req_id}-{}",
         std::process::id(),
@@ -132,7 +132,7 @@ pub async fn get_position_async() -> Result<Point, Error> {
     let path = tmp.into_temp_path();
     let path_str = path
         .to_str()
-        .ok_or_else(|| Error::Query("tmp path inválido".into()))?;
+        .ok_or_else(|| Error::Query("invalid tmp path".into()))?;
 
     let scripting = KwinScriptingProxy::new(&conn).await.map_err(dbus_err)?;
     let script_id = scripting
@@ -140,7 +140,7 @@ pub async fn get_position_async() -> Result<Point, Error> {
         .await
         .map_err(dbus_err)?;
     if script_id < 0 {
-        return Err(Error::Query(format!("loadScript retornou {script_id}")));
+        return Err(Error::Query(format!("loadScript returned {script_id}")));
     }
 
     let script_path = format!("/Scripting/Script{script_id}");
@@ -156,17 +156,17 @@ pub async fn get_position_async() -> Result<Point, Error> {
     let _ = scripting.unload_script(&plugin_name).await;
 
     let result = wait
-        .map_err(|_| Error::Query("timeout aguardando callback do KWin".into()))?
-        .map_err(|_| Error::Query("script KWin abortou antes do callback".into()))?;
+        .map_err(|_| Error::Query("timeout waiting for KWin callback".into()))?
+        .map_err(|_| Error::Query("KWin script exited before callback".into()))?;
 
     match result {
         Some((x, y)) => Ok(Point { x, y }),
-        None => Err(Error::Query("KWin retornou cursor inválido".into())),
+        None => Err(Error::Query("KWin returned an invalid cursor".into())),
     }
 }
 
-/// Wrapper síncrono: roda o runtime numa thread dedicada para funcionar
-/// tanto fora quanto dentro de um runtime tokio existente.
+/// Sync wrapper: runs the runtime on a dedicated thread so it works
+/// both outside and inside an existing tokio runtime.
 pub fn get_position_blocking() -> Result<Point, Error> {
     std::thread::spawn(move || {
         match tokio::runtime::Builder::new_current_thread()
@@ -178,5 +178,5 @@ pub fn get_position_blocking() -> Result<Point, Error> {
         }
     })
     .join()
-    .map_err(|_| Error::Query("thread kwin panicou".into()))?
+    .map_err(|_| Error::Query("kwin thread panicked".into()))?
 }
