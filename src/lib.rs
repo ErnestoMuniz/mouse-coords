@@ -1,6 +1,6 @@
 //! mouse-coords: get the exact mouse coordinates.
 //!
-//! ```rust
+//! ```rust,no_run
 //! let pos = mouse_coords::get_position().unwrap();
 //! println!("x={} y={}", pos.x, pos.y);
 //! ```

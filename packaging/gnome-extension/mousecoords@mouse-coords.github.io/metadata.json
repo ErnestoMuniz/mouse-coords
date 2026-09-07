@@ -1,0 +1,7 @@
+{
+  "uuid": "mousecoords@mouse-coords.github.io",
+  "name": "mouse-coords bridge",
+  "description": "Exposes the pointer position (GetPointerPosition) on the session bus for the mouse-coords crate. No background activity — only answers D-Bus queries.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "url": "https://github.com/ErnestoMuniz/mouse-coords"
+}

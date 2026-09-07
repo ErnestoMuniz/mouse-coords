@@ -1,6 +1,8 @@
 use crate::{Error, Point};
 
 #[cfg(target_os = "linux")]
+mod gnome;
+#[cfg(target_os = "linux")]
 mod kwin;
 #[cfg(target_os = "linux")]
 mod linux;

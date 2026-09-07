@@ -3,6 +3,8 @@ use x11rb::connection::Connection;
 use x11rb::protocol::xproto::ConnectionExt;
 
 #[cfg(target_os = "linux")]
+use super::gnome;
+#[cfg(target_os = "linux")]
 use super::kwin;
 
 /// Plain X11 via `XQueryPointer` on the root window.
@@ -29,29 +31,63 @@ pub fn get_position_x11() -> Result<Point, Error> {
 }
 
 fn is_wayland() -> bool {
-    std::env::var("XDG_SESSION_TYPE")
-        .map(|v| v.eq_ignore_ascii_case("wayland"))
+    // XDG_SESSION_TYPE is authoritative when present. WAYLAND_DISPLAY is a
+    // fallback, but must be non-empty (an empty/unset value means X11).
+    if let Ok(v) = std::env::var("XDG_SESSION_TYPE") {
+        if v.eq_ignore_ascii_case("wayland") {
+            return true;
+        }
+        if v.eq_ignore_ascii_case("x11") {
+            return false;
+        }
+    }
+    std::env::var("WAYLAND_DISPLAY")
+        .map(|v| !v.trim().is_empty())
         .unwrap_or(false)
-        || std::env::var("WAYLAND_DISPLAY").is_ok()
 }
 
 fn is_kde() -> bool {
     std::env::var("XDG_CURRENT_DESKTOP")
         .or_else(|_| std::env::var("XDG_SESSION_DESKTOP"))
-        .map(|v| v.to_ascii_lowercase().contains("kde"))
+        .map(|v| {
+            let v = v.to_ascii_lowercase();
+            v.contains("kde") || v.contains("plasma")
+        })
         .unwrap_or(false)
 }
 
-/// Linux: Wayland+KDE -> KWin scripting (`workspace.cursorPos`, accurate);
-/// everything else -> X11 (`XQueryPointer`).
+fn is_gnome() -> bool {
+    std::env::var("XDG_CURRENT_DESKTOP")
+        .or_else(|_| std::env::var("XDG_SESSION_DESKTOP"))
+        .map(|v| v.to_ascii_lowercase().contains("gnome"))
+        .unwrap_or(false)
+}
+
+/// Linux routing:
+/// - Wayland + KDE -> KWin scripting (`workspace.cursorPos`, accurate).
+/// - Wayland + GNOME -> GNOME Shell `Eval(global.get_pointer())`.
+/// - Wayland + anything else -> error (do NOT fall back to X11:
+///   `XQueryPointer` on XWayland is frozen, often the screen center,
+///   e.g. x=640 y=400 on 1280x800).
+/// - Plain X11 (no Wayland) -> X11 (`XQueryPointer`).
 pub fn get_position() -> Result<Point, Error> {
-    if is_wayland() && is_kde() {
-        match kwin::get_position_blocking() {
-            Ok(p) => return Ok(p),
-            Err(e) => {
-                eprintln!("mouse-coords: kwin failed ({e}), trying X11 as fallback");
-            }
+    if is_wayland() {
+        if is_kde() {
+            // Do not fall back to X11 here: on Wayland it would return a
+            // frozen coordinate instead of an error.
+            return kwin::get_position_blocking();
         }
+        if is_gnome() {
+            return gnome::get_position_blocking();
+        }
+        return Err(Error::Unsupported(
+            "Wayland session without a supported compositor backend (only KDE/KWin and \
+             GNOME Shell Eval are attempted). XQueryPointer on XWayland would return a frozen \
+             position (often the screen center), so it is not used as a fallback. Use KDE \
+             Plasma Wayland, a GNOME on Xorg session, or a compositor-specific API (e.g. \
+             Sway IPC, Hyprland socket)."
+                .into(),
+        ));
     }
     get_position_x11()
 }

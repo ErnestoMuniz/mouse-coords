@@ -1,8 +1,8 @@
 [package]
 name = "mouse-coords"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Get the exact mouse coordinates (KDE Wayland via KWin, X11, Windows, macOS)"
+description = "Get the exact mouse coordinates (KDE Wayland via KWin, GNOME Wayland via Shell extension/Eval, X11, Windows, macOS)"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/ErnestoMuniz/mouse-coords"
