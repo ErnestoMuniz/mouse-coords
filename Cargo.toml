@@ -1,12 +1,12 @@
 [package]
 name = "mouse-coords"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
-description = "Get the exact mouse coordinates (KDE Wayland via KWin, GNOME Wayland via Shell extension/Eval, X11, Windows, macOS)"
+description = "Get the exact mouse coordinates (Hyprland IPC, KDE Wayland via KWin, GNOME Wayland via Shell extension/Eval, X11, Windows, macOS)"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/ErnestoMuniz/mouse-coords"
-keywords = ["mouse", "cursor", "position", "wayland", "kwin"]
+keywords = ["mouse", "cursor", "position", "wayland", "hyprland", "kwin"]
 categories = ["os"]
 rust-version = "1.75"
 

@@ -5,6 +5,8 @@ use x11rb::protocol::xproto::ConnectionExt;
 #[cfg(target_os = "linux")]
 use super::gnome;
 #[cfg(target_os = "linux")]
+use super::hyprland;
+#[cfg(target_os = "linux")]
 use super::kwin;
 
 /// Plain X11 via `XQueryPointer` on the root window.
@@ -63,9 +65,22 @@ fn is_gnome() -> bool {
         .unwrap_or(false)
 }
 
+fn is_hyprland() -> bool {
+    // The instance signature is only set inside a Hyprland session, so it is
+    // the most reliable signal even if XDG_CURRENT_DESKTOP was overridden.
+    if std::env::var_os("HYPRLAND_INSTANCE_SIGNATURE").is_some() {
+        return true;
+    }
+    std::env::var("XDG_CURRENT_DESKTOP")
+        .or_else(|_| std::env::var("XDG_SESSION_DESKTOP"))
+        .map(|v| v.to_ascii_lowercase().contains("hyprland"))
+        .unwrap_or(false)
+}
+
 /// Linux routing:
 /// - Wayland + KDE -> KWin scripting (`workspace.cursorPos`, accurate).
 /// - Wayland + GNOME -> GNOME Shell `Eval(global.get_pointer())`.
+/// - Wayland + Hyprland -> Hyprland IPC socket (`cursorpos`).
 /// - Wayland + anything else -> error (do NOT fall back to X11:
 ///   `XQueryPointer` on XWayland is frozen, often the screen center,
 ///   e.g. x=640 y=400 on 1280x800).
@@ -80,12 +95,15 @@ pub fn get_position() -> Result<Point, Error> {
         if is_gnome() {
             return gnome::get_position_blocking();
         }
+        if is_hyprland() {
+            return hyprland::get_position_blocking();
+        }
         return Err(Error::Unsupported(
-            "Wayland session without a supported compositor backend (only KDE/KWin and \
-             GNOME Shell Eval are attempted). XQueryPointer on XWayland would return a frozen \
-             position (often the screen center), so it is not used as a fallback. Use KDE \
-             Plasma Wayland, a GNOME on Xorg session, or a compositor-specific API (e.g. \
-             Sway IPC, Hyprland socket)."
+            "Wayland session without a supported compositor backend (only KDE/KWin, GNOME \
+             Shell Eval and Hyprland IPC are attempted). XQueryPointer on XWayland would \
+             return a frozen position (often the screen center), so it is not used as a \
+             fallback. Use KDE Plasma Wayland, GNOME Wayland, Hyprland, a GNOME on Xorg \
+             session, or a compositor-specific API (e.g. Sway IPC)."
                 .into(),
         ));
     }

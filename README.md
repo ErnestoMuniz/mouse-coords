@@ -39,8 +39,20 @@ back to Shell `Eval`, which needs unsafe mode since GNOME 41 (`Alt+F2` →
 `lg` → `global.context.unsafe_mode = true`, valid until logout). If neither
 is available it returns an explanatory error instead of a frozen coordinate.
 
+## Hyprland (no setup)
+
+Hyprland exposes the pointer through its IPC socket, so there is nothing to
+install. The crate locates
+`$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket.sock` (falling back
+to `/tmp/hypr/...`) and asks for `cursorpos` over it.
+
+```bash
+cargo run --example pos
+```
+
 ## How it works (Linux)
 
+- **Hyprland Wayland**: native IPC socket (`cursorpos`). No extension needed.
 - **KDE Plasma Wayland** (e.g. Fedora KDE): KWin scripting over D-Bus
   (`workspace.cursorPos` + `callDBus` callback, same technique as
   `kdotool`/`wdotool`). It is the default backend when
