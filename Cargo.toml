@@ -6,7 +6,7 @@ description = "Get the exact mouse coordinates (Hyprland IPC, KDE Wayland via KW
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/ErnestoMuniz/mouse-coords"
-keywords = ["mouse", "cursor", "position", "wayland", "hyprland", "kwin"]
+keywords = ["mouse", "cursor", "position", "wayland", "hyprland"]
 categories = ["os"]
 rust-version = "1.75"
 
